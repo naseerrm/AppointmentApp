@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { Appointment } from './model/appointment';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { OnInit } from '@angular/core';
+import { Appointment } from './model/appointment';
+import { SocialPostRequest } from './model/social-post-request';
+import { SocialPostResponse } from './model/social-post-response';
+import { SocialPostService } from './services/social-post.service';
 
 @Component({
   selector: 'app-root',
@@ -12,55 +13,86 @@ import { OnInit } from '@angular/core';
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
-export class AppComponent implements OnInit{
+export class AppComponent implements OnInit {
   title = 'appointment-app';
 
-  newappointmentTitle : string = "";
-  newappointmentDate : string = "";
-  selectedIndex : number | null =  null;
+  newappointmentTitle = '';
+  newappointmentDate = '';
+  selectedIndex: number | null = null;
 
-  appointments : Appointment[] = [];
+  appointments: Appointment[] = [];
+
+  socialRequest: SocialPostRequest = {
+    businessName: '',
+    targetAudience: '',
+    platform: 'LinkedIn',
+    offerDetails: '',
+    tone: 'Professional',
+    callToAction: ''
+  };
+
+  generatedPost: SocialPostResponse | null = null;
+  socialLoading = false;
+  socialError = '';
+
+  constructor(private readonly socialPostService: SocialPostService) {}
 
   ngOnInit(): void {
-      let setappoitment = localStorage.getItem("appoitments");
-      this.appointments = setappoitment ? JSON.parse(setappoitment) : []
+    const setappoitment = localStorage.getItem('appoitments');
+    this.appointments = setappoitment ? JSON.parse(setappoitment) : [];
   }
 
-  Add(){
-     let d: Appointment = {
-    id: 1,
-    title: this.newappointmentTitle,
-    date: this.newappointmentDate
-  };
+  Add(): void {
+    const d: Appointment = {
+      id: 1,
+      title: this.newappointmentTitle,
+      date: this.newappointmentDate
+    };
+
     this.appointments.push(d);
-    this.newappointmentTitle = "";
-    this.newappointmentDate = "";
+    this.newappointmentTitle = '';
+    this.newappointmentDate = '';
 
-    localStorage.setItem("appoitments",JSON.stringify(this.appointments));
+    localStorage.setItem('appoitments', JSON.stringify(this.appointments));
   }
 
-  Remove(id : number){
-     this.appointments.splice(id,1);
-     localStorage.setItem("appoitments",JSON.stringify(this.appointments));
+  Remove(id: number): void {
+    this.appointments.splice(id, 1);
+    localStorage.setItem('appoitments', JSON.stringify(this.appointments));
   }
 
-  EditAppointment(app : Appointment,index : number){
+  EditAppointment(app: Appointment, index: number): void {
     this.selectedIndex = index;
-this.newappointmentTitle = app.title;
-this.newappointmentDate = app.date;
-console.log("Editing:", app); // Debug
+    this.newappointmentTitle = app.title;
+    this.newappointmentDate = app.date;
   }
 
-  update(){
-    if(this.selectedIndex !== null){
- this.appointments[this.selectedIndex].title = this.newappointmentTitle;
-    this.appointments[this.selectedIndex].date = this.newappointmentDate;
-    this.newappointmentTitle = "";
-    this.newappointmentDate = "";
-    this.selectedIndex = null;
-    localStorage.setItem("appoitments",JSON.stringify(this.appointments));
+  update(): void {
+    if (this.selectedIndex !== null) {
+      this.appointments[this.selectedIndex].title = this.newappointmentTitle;
+      this.appointments[this.selectedIndex].date = this.newappointmentDate;
+      this.newappointmentTitle = '';
+      this.newappointmentDate = '';
+      this.selectedIndex = null;
+      localStorage.setItem('appoitments', JSON.stringify(this.appointments));
     }
-   
   }
-   
+
+  generateSocialPost(): void {
+    this.socialLoading = true;
+    this.socialError = '';
+    this.generatedPost = null;
+
+    this.socialPostService.generatePost(this.socialRequest).subscribe({
+      next: (result) => {
+        this.generatedPost = result;
+        this.socialLoading = false;
+      },
+      error: () => {
+        this.socialError =
+          'Unable to generate post. Check your .NET API and Azure OpenAI settings.';
+        this.socialLoading = false;
+      }
+    });
+  }
 }

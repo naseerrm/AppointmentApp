@@ -1,0 +1,15 @@
+.container {
+  max-width: 980px;
+}
+
+.card {
+  border: 1px solid #dce5f2;
+  border-radius: 12px;
+}
+
+.result-panel {
+  border: 1px solid #d8f0df;
+  background: #f3fff6;
+  border-radius: 8px;
+  padding: 1rem;
+}
